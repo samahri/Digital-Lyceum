@@ -2,12 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm build",
   "functions": {
-    "api/server.ts": {
-      "runtime": "nodejs20.x"
-    }
+    "api/**/*.{js,ts}": { "runtime": "nodejs20.x" }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/server" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
