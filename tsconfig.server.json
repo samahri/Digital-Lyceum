@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.server.tsbuildinfo",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": false,
+    "outDir": "./dist/server",
+    "rootDir": "./server",
+    "skipLibCheck": true
+  },
+  "include": [
+    "server/**/*"
+  ],
+  "exclude": [
+    "server/**/*.test.ts",
+    "server/**/*.spec.ts",
+    "server/**/node_modules"
+  ]
+}
