@@ -4,11 +4,13 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "concurrently -k -n web,api -c auto \"vite\" \"pnpm run server\"",
-        "server": "node server/index.ts",
+        "dev": "concurrently \"npm:dev:server\" \"npm:dev:client\"",
+        "dev:server": "nodemon server/app.ts",
+        "dev:client": "vite",
         "build": "tsc -b && vite build",
         "lint": "eslint .",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "start": "node api/server.ts"
     },
     "dependencies": {
         "@langchain/core": "^0.3.76",
@@ -44,6 +46,7 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "*",
         "cmdk": "^1.1.1",
+        "compression": "^1.8.1",
         "cors": "^2.8.5",
         "dotenv": "^17.2.2",
         "embla-carousel-react": "^8.6.0",
@@ -63,6 +66,7 @@
         "vaul": "^1.1.2"
     },
     "devDependencies": {
+        "@types/compression": "^1.8.1",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.3",
         "@types/node": "^20.10.0",
@@ -70,6 +74,7 @@
         "@types/react-dom": "^19.1.9",
         "@vitejs/plugin-react-swc": "^3.10.2",
         "concurrently": "^9.2.1",
+        "nodemon": "^3.0.0",
         "vite": "6.3.5"
     }
 }
