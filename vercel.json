@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build",
+  "buildCommand": "pnpm build",
   "functions": {
     "api/server.js": {
-      "runtime": "nodejs20.x",
+      "runtime": "@vercel/node",
       "memory": 1024,
       "maxDuration": 10,
       "includeFiles": "dist/**"
