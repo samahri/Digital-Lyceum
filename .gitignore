@@ -22,6 +22,7 @@ out
 # Next.js
 .next/
 out/
+/server/.env
 
 # TypeScript
 *.tsbuildinfo

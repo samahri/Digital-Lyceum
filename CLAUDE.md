@@ -79,3 +79,4 @@ server/
 - Frontend hot reloads on changes via Vite
 - Backend runs with nodemon-like behavior via the server script
 - All TypeScript compilation happens at build time or via Vite
+- You tell the user what to do, you don't write any code for the user unless he tells you explicitly

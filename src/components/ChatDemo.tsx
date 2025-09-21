@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
@@ -24,27 +24,8 @@ export function ChatDemo() {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  // async function loadConfig() {
-  //   // setLoading(true);
-  //   // setError(null);
-  //   try {
-  //     const res = await axios.get("http://localhost:4000/api/config");
-  //     // setData(res.data);
-  //   } catch (e: any) {
-  //     // setError(e?.response?.data?.error ?? e.message);
-  //   } finally {
-  //     // setLoading(false);
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   loadConfig();
-  // }, []);
-
   const sendMessage = async () => {
     if (!inputValue.trim()) return;
-
-    const res = await axios.post("/api/chat");
 
     const userMessage: Message = {
       id: Date.now(),
@@ -57,17 +38,19 @@ export function ChatDemo() {
     setInputValue("");
     setIsTyping(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse: Message = {
-        id: Date.now() + 1,
-        content: res.data.data,
-        isBot: true,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, botResponse]);
-      setIsTyping(false);
-    }, 1500);
+    axios.post("/api/chat", { payload: inputValue })
+      .then(res => res.data.data)
+      .then(data => {
+        const botResponse: Message = {
+          id: Date.now() + 1,
+          content: data,
+          isBot: true,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, botResponse]);
+        setIsTyping(false);
+      })
+
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
