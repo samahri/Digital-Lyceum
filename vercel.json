@@ -2,14 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm build",
   "functions": {
-    "api/server.js": {
-      "runtime": "@vercel/node",
-      "memory": 1024,
-      "maxDuration": 10,
-      "includeFiles": "dist/**"
+    "api/server.ts": {
+      "runtime": "nodejs20.x"
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/server" }
+    { "source": "/api/(.*)", "destination": "/api/server" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
