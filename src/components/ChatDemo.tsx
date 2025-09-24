@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
 import { Send, Bot, User, GraduationCap } from "lucide-react";
-import axios from "axios";
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: number;
@@ -24,6 +24,44 @@ export function ChatDemo() {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
+  const handleStreamingResponse = async (reader: ReadableStreamDefaultReader<Uint8Array>) => {
+    let accumulatedText = '';
+
+    const botResponse: Message = {
+      id: Date.now() + 1,
+      content: '',
+      isBot: true,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, botResponse]);
+    setIsTyping(false);
+
+    // First, collect all chunks
+    const chunks: string[] = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = new TextDecoder().decode(value);
+      chunks.push(chunk);
+    }
+
+    // Then display them with controlled timing
+    const DISPLAY_DELAY = 30; // milliseconds between chunk displays
+    for (const chunk of chunks) {
+      accumulatedText += chunk;
+
+      setMessages(prev => [
+        ...prev.slice(0, -1),
+        { ...botResponse, content: accumulatedText }
+      ]);
+
+      // Wait before displaying next chunk
+      await new Promise(resolve => setTimeout(resolve, DISPLAY_DELAY));
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputValue.trim()) return;
 
@@ -38,19 +76,38 @@ export function ChatDemo() {
     setInputValue("");
     setIsTyping(true);
 
-    axios.post("/api/chat", { payload: inputValue })
-      .then(res => res.data.data)
-      .then(data => {
-        const botResponse: Message = {
-          id: Date.now() + 1,
-          content: data,
-          isBot: true,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, botResponse]);
-        setIsTyping(false);
-      })
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: inputValue }),
+      });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Response body is not readable");
+      }
+
+      await handleStreamingResponse(reader);
+    } catch (error) {
+      console.error("Error in sendMessage:", error);
+      setIsTyping(false);
+
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        content: "Sorry, I encountered an error while processing your request. Please try again.",
+        isBot: true,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -105,7 +162,7 @@ export function ChatDemo() {
                   : "bg-primary text-primary-foreground"
               }`}
             >
-              <p className="text-sm leading-relaxed">{message.content}</p>
+              <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
             {!message.isBot && (
               <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">

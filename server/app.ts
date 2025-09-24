@@ -6,9 +6,9 @@ import path from 'node:path';
 import fs from 'node:fs';
 import compression from 'compression';
 
-import { SYSTEM_PROMPT } from "./prompts/main-leo.ts"
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { SYSTEM_PROMPT } from "./prompts/main-leo.js";
 import { ChatOpenAI } from "@langchain/openai";
+// import { initializeVectorStore } from './vectorStore.js'
 
 dotenv.config({ path: './server/.env' });
 
@@ -21,7 +21,7 @@ app.disable('x-powered-by');
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-const distPath = path.join(process.cwd(), 'dist'); // if Vite builds to client/dist, use 'client/dist'
+const distPath = path.join(process.cwd(), 'build'); // Vite builds to build directory
 const indexHtml = path.join(distPath, 'index.html');
 
 // SPA fallback: send index.html for non-API routes
@@ -38,21 +38,52 @@ app.use(cors({
   credentials: true,
 }));
 
-const messages = [new SystemMessage(SYSTEM_PROMPT)]
+const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+  { role: 'system', content: SYSTEM_PROMPT }
+];
 
-// Optional: issue an httpOnly session cookie after login
+const agentModel = new ChatOpenAI({ model: "gpt-4o" })
+
 app.post("/api/chat", async (req, res) => {
+  try {
+    messages.push({ role: 'user', content: req.body.payload });
 
-  const agentModel = new ChatOpenAI({ model: "gpt-4o" })
+    const response = await agentModel.stream(messages)
 
-  messages.push(new HumanMessage(req.body.payload))
+    // Set headers for streaming
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Transfer-Encoding', 'chunked');
+    
+    let responseStr = ''
+    
+    // Stream the response
+    for await (const chunk of response) {
+      const content = chunk.content;
+      responseStr += content;
+      res.write(content);
+      res.flush?.(); // Force immediate flush of the chunk
+      // await new Promise(resolve => setTimeout(resolve, 1)); // Small delay to ensure chunks are separate
+    }
 
-  const response = await agentModel.invoke(messages)
+    messages.push({ role: 'assistant', content: responseStr });
 
-  res.json({ ok: true, data: response.content });
+    res.end();
+  } catch (error) {
+    console.error('Chat API error:', error);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
 });
 
 const port = 4000;
-// app.listen(port, () => console.log(`API on http://localhost:${port}`));
+
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, async () =>  {
+    // const retrieverTool = await initializeVectorStore()
+    // const results = await retrieverTool.invoke({"query": "what is happiness?"})
+
+    // console.log(results)
+    console.log(`API on http://localhost:${port}`)});
+}
+
 export default app;
 
